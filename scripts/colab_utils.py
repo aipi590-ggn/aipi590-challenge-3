@@ -257,22 +257,26 @@ def publish_artifacts(
 # ---------------------------------------------------------------------------
 
 _TRAINING_CHART_HTML = """
-<div id="training-chart" style="width:100%;height:380px;border-radius:8px;overflow:hidden"></div>
+<div id="training-chart" style="height:380px;border-radius:8px;overflow:hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 <script>
 (function () {
-  var chart = echarts.init(document.getElementById('training-chart'), 'dark');
+  var dom = document.getElementById('training-chart');
+  var w = Math.max(window.innerWidth - 32, 400);
+  dom.style.width = w + 'px';
+  var chart = echarts.init(dom, 'dark', { width: w, height: 380 });
   chart.setOption({
     backgroundColor: '#1a1a2e',
     animation: false,
-    grid: { top: 50, right: 80, bottom: 50, left: 70 },
+    grid: { top: 50, right: 90, bottom: 55, left: 90 },
     xAxis: {
-      type: 'value', name: 'Timesteps', nameLocation: 'middle', nameGap: 30,
+      type: 'value', name: 'Timesteps', nameLocation: 'middle', nameGap: 32,
       axisLabel: { formatter: function(v) { return (v / 1000).toFixed(0) + 'k'; } }
     },
     yAxis: [
       {
         type: 'value', name: 'Mean Reward', min: -50, max: 0,
+        axisLabel: { formatter: function(v) { return v.toFixed(0); } },
         splitLine: { lineStyle: { opacity: 0.15 } }
       },
       {
@@ -281,7 +285,7 @@ _TRAINING_CHART_HTML = """
         splitLine: { show: false }
       }
     ],
-    legend: { top: 10, data: ['Mean Reward', 'Success Rate'] },
+    legend: { top: 12, right: 90, data: ['Mean Reward', 'Success Rate'] },
     series: [
       {
         name: 'Mean Reward', type: 'line', yAxisIndex: 0,
