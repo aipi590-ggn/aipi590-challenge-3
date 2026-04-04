@@ -148,6 +148,164 @@ def prepare_notebook(
     return repo_path
 
 
+def publish_release(
+    version: str,
+    paths: Iterable[str | Path] | None = None,
+    description: str = "",
+    repo_dir: str | Path = DEFAULT_REPO_DIR,
+) -> bool:
+    """Create a GitHub release and upload model artifacts.
+
+    Args:
+        version: Release tag (e.g., 'v1', 'v1.0.0').
+        paths: Files to upload. If None, includes all .zip files from results/models/.
+        description: Release description (markdown).
+        repo_dir: Repository directory.
+
+    Returns:
+        True if successful, False otherwise.
+    """
+    repo_path = Path(repo_dir)
+
+    if paths is None:
+        # Default: include all .zip files in results/models/
+        models_dir = repo_path / "results" / "models"
+        if models_dir.exists():
+            paths = sorted(models_dir.glob("*.zip"))
+        else:
+            paths = []
+
+    paths = [Path(p) for p in paths]
+    if not paths:
+        print("No files to upload.")
+        return False
+
+    # Check if all files exist
+    missing = [p for p in paths if not p.exists()]
+    if missing:
+        raise FileNotFoundError(f"Files not found: {', '.join(str(p) for p in missing)}")
+
+    # Try to use gh CLI first (simplest, most reliable)
+    try:
+        import shutil
+        if shutil.which("gh"):
+            return _publish_release_gh(version, paths, description)
+    except Exception:
+        pass
+
+    # Fall back to GitHub API
+    return _publish_release_api(version, paths, description, repo_path)
+
+
+def _publish_release_gh(
+    version: str,
+    paths: list[Path],
+    description: str,
+) -> bool:
+    """Create release using GitHub CLI."""
+    import subprocess
+
+    cmd = ["gh", "release", "create", version, "--title", version]
+
+    if description:
+        cmd.extend(["--notes", description])
+
+    cmd.extend(str(p) for p in paths)
+
+    try:
+        subprocess.run(cmd, check=True)
+        print(f"Release {version} created with {len(paths)} asset(s)")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"gh release failed: {e}")
+        return False
+
+
+def _publish_release_api(
+    version: str,
+    paths: list[Path],
+    description: str,
+    repo_path: Path,
+) -> bool:
+    """Create release using GitHub REST API."""
+    try:
+        from google.colab import userdata
+        token = userdata.get(TOKEN_SECRET_NAME)
+    except Exception:
+        token = None
+
+    if not token:
+        print("Error: No GitHub token available. Set GITHUB_TOKEN_AIPI590_CHALLENGE_3 in Colab secrets.")
+        return False
+
+    import urllib.request
+    import json as _json
+
+    owner, repo = "jonasneves", "aipi590-challenge-3"
+    api_url = f"https://api.github.com/repos/{owner}/{repo}/releases"
+
+    # Create release
+    release_data = {
+        "tag_name": version,
+        "name": version,
+        "body": description,
+        "draft": False,
+        "prerelease": False,
+    }
+
+    req = urllib.request.Request(
+        api_url,
+        data=_json.dumps(release_data).encode(),
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            release = _json.loads(response.read())
+        upload_url = release["upload_url"].replace("{?name,label}", "")
+    except Exception as e:
+        print(f"Failed to create release: {e}")
+        return False
+
+    # Upload assets
+    success_count = 0
+    for path in paths:
+        try:
+            with open(path, "rb") as f:
+                asset_data = f.read()
+
+            asset_url = f"{upload_url}?name={path.name}"
+            asset_req = urllib.request.Request(
+                asset_url,
+                data=asset_data,
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/octet-stream",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(asset_req) as response:
+                response.read()
+            print(f"Uploaded {path.name}")
+            success_count += 1
+        except Exception as e:
+            print(f"Failed to upload {path.name}: {e}")
+
+    if success_count == len(paths):
+        print(f"Release {version} created with {len(paths)} asset(s)")
+        return True
+    else:
+        print(f"Partial upload: {success_count}/{len(paths)} assets uploaded")
+        return success_count > 0
+
+
 def save_notebook(
     notebook_name: str,
     repo_dir: str | Path = DEFAULT_REPO_DIR,
