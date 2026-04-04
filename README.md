@@ -1,8 +1,13 @@
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+[![MuJoCo](https://img.shields.io/badge/MuJoCo-2.3%2B-green.svg)](https://mujoco.org/)
+[![Stable Baselines3](https://img.shields.io/badge/SB3-1.8%2B-orange.svg)](https://stable-baselines3.readthedocs.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
+
 # AIPI 590: Challenge 3 — RL in the Physical World
 
-Training a robotic grasping/reaching policy in MuJoCo simulation using SAC + Hindsight Experience Replay, with analysis of sim-to-real transfer gaps.
+Training robotic grasping and reaching policies in MuJoCo simulation using SAC + Hindsight Experience Replay, with analysis of sim-to-real transfer gaps against physical robot hardware.
 
-**Team:** Lindsay Gross, Yifei Guo, Jonas Neves
+---
 
 ## 🎮 Interactive Visualization
 
@@ -12,8 +17,13 @@ Explore trained policy episodes with playback controls, speed adjustment, and re
 
 ## Notebooks
 
-- **[challenge3-pickandplace.ipynb](notebooks/challenge3-pickandplace.ipynb)** — Main: 1M timesteps, FetchPickAndPlace-v4 (manipulation task)
-- **[challenge3-reach-experimentation.ipynb](notebooks/challenge3-reach-experimentation.ipynb)** — Experimentation: 200k timesteps, FetchReach-v4 (reaching task)
+| Task | Notebook | Open in Colab |
+|------|----------|---------------|
+| Manipulation (Main) | [challenge3-pickandplace.ipynb](notebooks/challenge3-pickandplace.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/jonasneves/aipi590-challenge-3/blob/main/notebooks/challenge3-pickandplace.ipynb) |
+| Reaching (Experimentation) | [challenge3-reach-experimentation.ipynb](notebooks/challenge3-reach-experimentation.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/jonasneves/aipi590-challenge-3/blob/main/notebooks/challenge3-reach-experimentation.ipynb) |
+
+- **pickandplace**: 1M timesteps, FetchPickAndPlace-v4 (grasping & manipulation)
+- **reach**: 200k timesteps, FetchReach-v4 (reaching task)
 
 ## Trained Policies
 
@@ -53,13 +63,40 @@ Downloadable from [GitHub Releases](../../releases):
 4. **Zero Calibration Drift** — per-joint errors compound through kinematic chain
 5. **Domain Randomization** — table friction, object properties, action delay
 
+## Structure
+
+```
+aipi590-challenge-3/
+├── notebooks/
+│   ├── challenge3-pickandplace.ipynb     # Main: 1M steps, FetchPickAndPlace-v4
+│   └── challenge3-reach-experimentation.ipynb  # Experimentation: 200k steps, FetchReach-v4
+├── scripts/
+│   ├── colab_utils.py                    # Colab automation (publish, live charts)
+│   └── trajectory_extractor.py           # Extract trajectories for visualization
+├── docs/
+│   ├── index.html                        # Interactive Three.js viewer
+│   └── data/trajectories.json            # Trajectory data
+├── results/
+│   ├── models/                           # Trained policy checkpoints
+│   ├── videos/                           # Rollout episodes (mp4)
+│   └── plots/                            # Training curves (matplotlib)
+├── requirements.txt
+└── README.md
+```
+
+---
+
 ## Setup
 
+Each notebook is self-contained and installs dependencies automatically. To run locally:
+
 ```bash
-pip install mujoco gymnasium-robotics stable-baselines3 moviepy
+pip install -r requirements.txt
 ```
 
 Then run a notebook in [Google Colab](https://colab.research.google.com) or Kaggle.
+
+---
 
 
 
@@ -79,3 +116,11 @@ Then run a notebook in [Google Colab](https://colab.research.google.com) or Kagg
     <td></td>
   </tr>
 </table>
+
+---
+
+## Team
+
+Lindsay Gross · Yifei Guo · Jonas Neves
+
+Duke University · AIPI 590 · Spring 2026
