@@ -40,7 +40,7 @@ def extract_trajectory(
             action, _ = model.predict(obs, deterministic=deterministic)
 
             # Extract state before step
-            state = env.unwrapped.sim.data.qpos.copy()  # Joint positions
+            state = env.unwrapped.data.qpos.copy()  # Joint positions
 
             # Get goal positions from observation dict
             achieved = obs.get('achieved_goal', np.array([0, 0, 0]))
