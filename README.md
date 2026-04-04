@@ -1,9 +1,9 @@
+# AIPI 590: Challenge 3 — RL in the Physical World
+
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![MuJoCo](https://img.shields.io/badge/MuJoCo-2.3%2B-green.svg)](https://mujoco.org/)
 [![Stable Baselines3](https://img.shields.io/badge/SB3-1.8%2B-orange.svg)](https://stable-baselines3.readthedocs.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
-
-# AIPI 590: Challenge 3 — RL in the Physical World
 
 Training robotic grasping and reaching policies in MuJoCo simulation using SAC + Hindsight Experience Replay, with analysis of sim-to-real transfer gaps against physical robot hardware.
 
