@@ -325,13 +325,18 @@
             try {
                 const response = await fetch('data/trajectories.json');
                 if (!response.ok) {
-                    throw new Error('Trajectories not found. Run notebooks to generate trajectory data.');
+                    throw new Error('Trajectories file not found (HTTP ' + response.status + '). Run the notebooks to generate trajectory data.');
                 }
                 trajectories = await response.json();
+                if (!Array.isArray(trajectories) || trajectories.length === 0) {
+                    throw new Error('No episodes found in trajectories.json');
+                }
                 populateEpisodeSelect();
             } catch (error) {
                 console.error('Error loading trajectories:', error);
-                episodeSelect.innerHTML = '<option>Error: ' + error.message + '</option>';
+                const msg = error.message || 'Failed to load trajectories';
+                episodeSelect.innerHTML = '<option>⚠ ' + msg + '</option>';
+                episodeSelect.disabled = true;
             }
         }
 
