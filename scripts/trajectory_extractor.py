@@ -36,18 +36,23 @@ def extract_trajectory(
         step = 0
 
         while not done:
+            # For MultiInputPolicy, predict expects the dict-based observation directly
             action, _ = model.predict(obs, deterministic=deterministic)
 
             # Extract state before step
             state = env.unwrapped.sim.data.qpos.copy()  # Joint positions
+
+            # Get goal positions from observation dict
+            achieved = obs.get('achieved_goal', np.array([0, 0, 0]))
+            desired = obs.get('desired_goal', np.array([0, 0, 0]))
 
             # Record timestep
             timestep = {
                 'step': step,
                 'joint_positions': state[:7].tolist(),  # 7-DOF arm
                 'gripper_position': state[7:9].tolist() if len(state) > 7 else [0, 0],
-                'object_position': obs.get('achieved_goal', [0, 0, 0]).tolist()[:3],
-                'goal_position': obs.get('desired_goal', [0, 0, 0]).tolist()[:3],
+                'object_position': achieved[:3].tolist() if hasattr(achieved, 'tolist') else achieved[:3],
+                'goal_position': desired[:3].tolist() if hasattr(desired, 'tolist') else desired[:3],
             }
             trajectory['timesteps'].append(timestep)
 
