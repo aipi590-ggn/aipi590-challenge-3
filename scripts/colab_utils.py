@@ -388,40 +388,8 @@ def publish_release(
     if missing:
         raise FileNotFoundError(f"Files not found: {', '.join(str(p) for p in missing)}")
 
-    # Try to use gh CLI first (simplest, most reliable)
-    try:
-        import shutil
-        if shutil.which("gh"):
-            return _publish_release_gh(version, paths, description)
-    except Exception:
-        pass
-
-    # Fall back to GitHub API
+    # Use GitHub API (gh CLI requires separate auth in notebooks)
     return _publish_release_api(version, paths, description, repo_path)
-
-
-def _publish_release_gh(
-    version: str,
-    paths: list[Path],
-    description: str,
-) -> bool:
-    """Create release using GitHub CLI."""
-    import subprocess
-
-    cmd = ["gh", "release", "create", version, "--title", version]
-
-    if description:
-        cmd.extend(["--notes", description])
-
-    cmd.extend(str(p) for p in paths)
-
-    try:
-        subprocess.run(cmd, check=True)
-        print(f"Release {version} created with {len(paths)} asset(s)")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"gh release failed: {e}")
-        return False
 
 
 def _publish_release_api(
