@@ -181,8 +181,8 @@ def save_notebook(
 
 
 def publish_artifacts(
-    paths: Iterable[str | Path],
     message: str,
+    paths: Iterable[str | Path] | None = None,
     repo_dir: str | Path = DEFAULT_REPO_DIR,
     dry_run: bool = False,
 ) -> bool | None:
@@ -190,6 +190,8 @@ def publish_artifacts(
 
     Uses a stored secret if available; otherwise shows a Sign in & Publish
     button — no manual setup required.
+
+    If paths is None, includes all files under results/ directory.
     """
     try:
         import google.colab  # noqa: F401
@@ -197,7 +199,17 @@ def publish_artifacts(
         raise RuntimeError("publish_artifacts only works from Google Colab.") from exc
 
     repo_path = Path(repo_dir)
-    rel_paths = [str(Path(p)) for p in paths]
+
+    if paths is None:
+        # Default: include all files in results/
+        results_dir = repo_path / "results"
+        if results_dir.exists():
+            paths = sorted(results_dir.rglob("*"))
+            paths = [p for p in paths if p.is_file()]
+        else:
+            paths = []
+
+    rel_paths = [str(Path(p).relative_to(repo_path)) for p in paths]
 
     try:
         from google.colab import userdata
