@@ -18,13 +18,11 @@ Downloadable from [GitHub Releases](../../releases):
 
 ### Challenge 3 (FetchReach-v4, 200k steps)
 
-| Episode 0 | Episode 1 | Episode 2 |
-|-----------|-----------|-----------|
-| [![Episode 0](https://raw.githubusercontent.com/jonasneves/aipi590-challenge-3/main/results/videos/fetchreach-episode-0.mp4)](https://raw.githubusercontent.com/jonasneves/aipi590-challenge-3/main/results/videos/fetchreach-episode-0.mp4) | [![Episode 1](https://raw.githubusercontent.com/jonasneves/aipi590-challenge-3/main/results/videos/fetchreach-episode-1.mp4)](https://raw.githubusercontent.com/jonasneves/aipi590-challenge-3/main/results/videos/fetchreach-episode-1.mp4) | [![Episode 2](https://raw.githubusercontent.com/jonasneves/aipi590-challenge-3/main/results/videos/fetchreach-episode-2.mp4)](https://raw.githubusercontent.com/jonasneves/aipi590-challenge-3/main/results/videos/fetchreach-episode-2.mp4) |
-
-| Episode 3 | Episode 4 |
-|-----------|-----------|
-| [![Episode 3](https://raw.githubusercontent.com/jonasneves/aipi590-challenge-3/main/results/videos/fetchreach-episode-3.mp4)](https://raw.githubusercontent.com/jonasneves/aipi590-challenge-3/main/results/videos/fetchreach-episode-3.mp4) | [![Episode 4](https://raw.githubusercontent.com/jonasneves/aipi590-challenge-3/main/results/videos/fetchreach-episode-4.mp4)](https://raw.githubusercontent.com/jonasneves/aipi590-challenge-3/main/results/videos/fetchreach-episode-4.mp4) |
+- [Episode 0](https://github.com/jonasneves/aipi590-challenge-3/blob/main/results/videos/fetchreach-episode-0.mp4)
+- [Episode 1](https://github.com/jonasneves/aipi590-challenge-3/blob/main/results/videos/fetchreach-episode-1.mp4)
+- [Episode 2](https://github.com/jonasneves/aipi590-challenge-3/blob/main/results/videos/fetchreach-episode-2.mp4)
+- [Episode 3](https://github.com/jonasneves/aipi590-challenge-3/blob/main/results/videos/fetchreach-episode-3.mp4)
+- [Episode 4](https://github.com/jonasneves/aipi590-challenge-3/blob/main/results/videos/fetchreach-episode-4.mp4)
 
 ## Key Decisions
 
