@@ -228,48 +228,24 @@ def publish_artifacts(
     </button>
     <div class="ch3-status" id="ch3-pub-status"></div>
     <script type="module">
-      import {{ GITHUB_CLIENT_ID, OAUTH_CALLBACK_ORIGIN }} from 'https://neevs.io/auth/lib.js';
+      import {{ connectGitHub }} from 'https://neevs.io/auth/lib.js';
       const btn = document.getElementById('ch3-pub-btn');
       const status = document.getElementById('ch3-pub-status');
-
-      btn.addEventListener('click', () => {{
+      btn.addEventListener('click', async () => {{
         btn.disabled = true;
         status.textContent = 'Waiting for GitHub authorization\u2026';
-
-        const state = crypto.randomUUID();
-        const authUrl = new URL('https://github.com/login/oauth/authorize');
-        authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);
-        authUrl.searchParams.set('redirect_uri', OAUTH_CALLBACK_ORIGIN + '/auth/');
-        authUrl.searchParams.set('scope', 'repo');
-        authUrl.searchParams.set('state', state);
-
-        // Open as a real anchor click — not blocked by Colab's iframe sandbox
-        const a = document.createElement('a');
-        a.href = authUrl.toString();
-        a.target = '_blank';
-        a.rel = 'noopener';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-        // Wait for postMessage back from the callback page
-        const handleMessage = (event) => {{
-          if (event.origin !== OAUTH_CALLBACK_ORIGIN) return;
-          const {{ type, token }} = event.data || {{}};
-          if (type !== 'gh-auth') return;
-          window.removeEventListener('message', handleMessage);
-          if (!token) {{
-            btn.disabled = false;
-            btn.style.background = '';
-            status.textContent = 'Authorization failed \u2014 try again.';
-            return;
-          }}
+        try {{
+          const {{ token }} = await connectGitHub('repo', 'jonasneves');
           btn.style.background = '#2da44e';
           btn.innerHTML = '\u2713 Authorized \u2014 publishing\u2026';
           status.textContent = '';
           google.colab.kernel.invokeFunction('_ch3_publish_cb', [token], {{}});
-        }};
-        window.addEventListener('message', handleMessage);
+        }} catch (e) {{
+          btn.disabled = false;
+          btn.style.background = '';
+          status.textContent = 'Authorization failed \u2014 try again.';
+          console.error(e);
+        }}
       }});
     </script>
     """))
