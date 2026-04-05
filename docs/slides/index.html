@@ -9,74 +9,85 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Inter', system-ui, sans-serif; background: #f5f5f5; color: #1a1a1a; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #1a1a1a; color: #e0e0e0; padding: 40px 0; }
+
+  .slide-wrapper { max-width: 960px; margin: 0 auto 48px; }
 
   .slide {
-    max-width: 960px; margin: 32px auto; background: #fff;
-    border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    padding: 48px 56px; min-height: 420px;
-    display: flex; flex-direction: column; position: relative;
+    width: 100%; aspect-ratio: 16 / 9;
+    background: #fff; color: #1a1a1a;
+    border-radius: 6px; overflow: hidden;
+    padding: 4% 5%; position: relative;
+    display: flex; flex-direction: column;
+    font-size: min(1.8vw, 17px);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
   }
+
   .slide--cover {
-    background: #012169; color: #f3f2f1;
-    justify-content: center; min-height: 360px;
+    background: #012169 url('') center/cover; color: #f3f2f1;
+    justify-content: center;
   }
   .slide--cover .tag { color: rgba(243,242,241,0.75); }
   .slide--cover h2 { color: #f3f2f1; }
   .slide--cover em { color: #C84E00; font-style: normal; }
-  .slide--cover .subtitle { color: rgba(243,242,241,0.6); font-weight: 300; margin-top: 8px; font-size: 18px; }
-  .slide--cover .names { color: rgba(243,242,241,0.6); margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 14px; }
+  .slide--cover .subtitle { color: rgba(243,242,241,0.6); font-weight: 300; margin-top: 0.4em; font-size: 1.1em; }
+  .slide--cover .names { color: rgba(243,242,241,0.6); margin-top: 1.2em; padding-top: 0.8em; border-top: 1px solid rgba(255,255,255,0.15); font-size: 0.8em; }
 
-  .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 12px; }
-  h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 20px; }
+  .tag { font-size: 0.6em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 0.5em; display: flex; align-items: center; gap: 0.4em; }
+  .tag::before { content: ''; width: 1em; height: 2px; background: currentColor; }
+  h2 { font-size: 1.7em; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 0.7em; }
   h2 em { color: #012169; font-style: normal; }
-  .slide--cover h2 { font-size: 36px; }
+  .slide--cover h2 { font-size: 2.2em; }
+  .slide--cover h2 em { color: #C84E00; }
 
-  ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
-  li { font-size: 16px; line-height: 1.5; padding-left: 20px; position: relative; }
-  li::before { content: ''; position: absolute; left: 0; top: 9px; width: 6px; height: 6px; border-radius: 50%; background: #012169; }
+  ul { list-style: none; display: flex; flex-direction: column; gap: 0.6em; }
+  li { font-size: 1em; line-height: 1.5; padding-left: 1.2em; position: relative; }
+  li::before { content: ''; position: absolute; left: 0; top: 0.55em; width: 0.35em; height: 0.35em; border-radius: 50%; background: #012169; }
 
   .callout {
-    margin-top: 16px; padding: 14px 18px;
+    margin-top: 0.8em; padding: 0.7em 1em;
     background: #f8f9fb; border-left: 3px solid #012169;
-    border-radius: 0 6px 6px 0; font-size: 14px; color: #444; line-height: 1.5;
+    border-radius: 0 4px 4px 0; font-size: 0.85em; color: #444; line-height: 1.5;
   }
 
-  .pipeline { display: flex; align-items: center; justify-content: center; gap: 0; margin: 20px 0; flex-wrap: wrap; }
-  .pipe-step { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 20px; background: #f0f2f5; border-radius: 6px; min-width: 120px; text-align: center; }
-  .pipe-num { font-size: 12px; font-weight: 700; color: #012169; }
-  .pipe-label { font-size: 14px; font-weight: 700; }
-  .pipe-desc { font-size: 12px; color: #666; }
-  .pipe-arrow { font-size: 18px; color: #999; padding: 0 8px; }
+  .pipeline { display: flex; align-items: center; justify-content: center; gap: 0; margin: 0.8em 0; flex-wrap: wrap; }
+  .pipe-step { display: flex; flex-direction: column; align-items: center; gap: 0.2em; padding: 0.5em 1em; background: #f0f2f5; border-radius: 4px; min-width: 6em; text-align: center; }
+  .pipe-num { font-size: 0.65em; font-weight: 700; color: #012169; }
+  .pipe-label { font-size: 0.75em; font-weight: 700; }
+  .pipe-desc { font-size: 0.65em; color: #666; }
+  .pipe-arrow { font-size: 1em; color: #999; padding: 0 0.4em; }
 
-  .stats { display: flex; gap: 16px; margin: 16px 0; }
-  .stat { flex: 1; padding: 14px 18px; background: #f0f2f5; border-radius: 6px; text-align: center; }
-  .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 4px; }
-  .stat-value { font-size: 22px; font-weight: 700; }
+  .stats { display: flex; gap: 0.8em; margin: 0.6em 0; }
+  .stat { flex: 1; padding: 0.6em 0.8em; background: #f0f2f5; border-radius: 4px; text-align: center; }
+  .stat-label { font-size: 0.6em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 0.2em; }
+  .stat-value { font-size: 1.3em; font-weight: 700; }
 
-  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0; }
-  th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #888; padding: 8px 12px; border-bottom: 2px solid #e0e0e0; }
-  td { padding: 6px 12px; border-bottom: 1px solid #f0f0f0; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin: 0.5em 0; }
+  th { text-align: left; font-size: 0.65em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #888; padding: 0.4em 0.6em; border-bottom: 2px solid #e0e0e0; }
+  td { padding: 0.3em 0.6em; border-bottom: 1px solid #f0f0f0; }
 
-  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1; align-items: center; margin-top: 8px; }
-  .split img { width: 100%; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2em; flex: 1; align-items: center; margin-top: 0.4em; min-height: 0; }
+  .split img { width: 100%; height: 100%; object-fit: contain; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
   .split--img-left { grid-template-columns: 55% 1fr; }
 
-  .notes {
-    margin-top: 16px; padding: 14px 18px;
-    background: #fffbf5; border-left: 3px solid #C84E00;
-    border-radius: 0 6px 6px 0; font-size: 13px; color: #555; line-height: 1.6;
-  }
-  .notes summary { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #C84E00; cursor: pointer; }
-
   .speaker-badge {
-    position: absolute; top: 16px; right: 20px;
-    font-size: 11px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.06em; color: #999;
+    position: absolute; top: 4%; right: 5%;
+    font-size: 0.6em; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #bbb;
   }
-  .slide--cover .speaker-badge { color: rgba(243,242,241,0.5); }
+  .slide--cover .speaker-badge { color: rgba(243,242,241,0.4); }
+  .slide-num { font-size: 0.55em; color: #ccc; position: absolute; bottom: 3%; right: 5%; }
 
-  .slide-num { font-size: 11px; color: #ccc; position: absolute; bottom: 16px; right: 20px; }
+  /* Speaker notes below the slide */
+  .notes {
+    margin-top: 12px; padding: 16px 20px;
+    background: #242424; border-left: 3px solid #C84E00;
+    border-radius: 4px; font-size: 13px; color: #aaa; line-height: 1.7;
+  }
+  .notes-header {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #C84E00; margin-bottom: 8px;
+  }
 </style>
 </head>
 <body>
@@ -89,31 +100,26 @@ const slideIds = Object.keys(deck.slides);
 slideIds.forEach((id, idx) => {
   const s = deck.slides[id];
   const isCover = id === 's1' || id === 's11';
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'slide-wrapper';
+
+  // Slide frame
   const div = document.createElement('div');
   div.className = 'slide' + (isCover ? ' slide--cover' : '');
 
   let html = '';
 
-  // Speaker badge
   if (s.speaker) html += `<div class="speaker-badge">${s.speaker}</div>`;
-
-  // Slide number
   html += `<div class="slide-num">${idx + 1} / ${slideIds.length}</div>`;
-
-  // Tag
   if (s.tag) html += `<div class="tag">${s.tag}</div>`;
 
-  // Title / heading
   if (s.title) html += `<h2>${s.title}</h2>`;
   else if (s.heading) html += `<h2>${s.heading}</h2>`;
 
-  // Subtitle (cover)
   if (s.subtitle) html += `<div class="subtitle">${s.subtitle}</div>`;
-
-  // Name (cover)
   if (s.name && isCover) html += `<div class="names">${s.name}</div>`;
 
-  // Pipeline
   if (s.pipeline) {
     html += '<div class="pipeline">';
     s.pipeline.forEach((p, i) => {
@@ -123,14 +129,12 @@ slideIds.forEach((id, idx) => {
     html += '</div>';
   }
 
-  // Stats
   if (s.stats) {
     html += '<div class="stats">';
     s.stats.forEach(st => html += `<div class="stat"><div class="stat-label">${st.label}</div><div class="stat-value">${st.value}</div></div>`);
     html += '</div>';
   }
 
-  // Comparison table
   if (s.comparisonTable) {
     const t = s.comparisonTable;
     html += '<table><thead><tr>' + t.headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
@@ -143,7 +147,6 @@ slideIds.forEach((id, idx) => {
     html += '</tbody></table>';
   }
 
-  // Image + bullets split
   if (s.img && s.bullets) {
     html += `<div class="split${s.img.includes('rollout') ? ' split--img-left' : ''}">`;
     if (s.img.includes('rollout')) {
@@ -153,26 +156,24 @@ slideIds.forEach((id, idx) => {
     }
     html += '</div>';
   } else {
-    // Bullets only
-    if (s.bullets) {
-      html += '<ul>' + s.bullets.map(b => `<li><span>${b}</span></li>`).join('') + '</ul>';
-    }
-    // Image only
-    if (s.img && !s.bullets) {
-      html += `<div style="text-align:center;margin-top:12px"><img src="${s.img}" alt="${s.imgAlt || ''}" style="max-width:100%;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.08)"></div>`;
-    }
+    if (s.bullets) html += '<ul>' + s.bullets.map(b => `<li><span>${b}</span></li>`).join('') + '</ul>';
+    if (s.img && !s.bullets) html += `<div style="text-align:center;margin-top:0.5em"><img src="${s.img}" alt="${s.imgAlt || ''}" style="max-width:80%;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.08)"></div>`;
   }
 
-  // Callout
   if (s.callout) html += `<div class="callout">${s.callout}</div>`;
 
-  // Speaker notes (collapsed)
+  div.innerHTML = html;
+  wrapper.appendChild(div);
+
+  // Speaker notes below the slide
   if (s.notes) {
-    html += `<details class="notes"><summary>Speaker notes</summary><p>${s.notes}</p></details>`;
+    const notes = document.createElement('div');
+    notes.className = 'notes';
+    notes.innerHTML = `<div class="notes-header">Speaker: ${s.speaker || '?'}</div>${s.notes}`;
+    wrapper.appendChild(notes);
   }
 
-  div.innerHTML = html;
-  container.appendChild(div);
+  container.appendChild(wrapper);
 });
 </script>
 </body>
