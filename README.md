@@ -34,13 +34,29 @@ Downloadable from [GitHub Releases](../../releases):
 
 ## Rollout Videos
 
-### Challenge 3 (FetchReach-v4, 200k steps)
+### FetchPickAndPlace-v4 (1M steps)
 
-- [Episode 0](https://github.com/aipi590-ggn/aipi590-challenge-3/blob/main/results/videos/fetchreach-episode-0.mp4)
-- [Episode 1](https://github.com/aipi590-ggn/aipi590-challenge-3/blob/main/results/videos/fetchreach-episode-1.mp4)
-- [Episode 2](https://github.com/aipi590-ggn/aipi590-challenge-3/blob/main/results/videos/fetchreach-episode-2.mp4)
-- [Episode 3](https://github.com/aipi590-ggn/aipi590-challenge-3/blob/main/results/videos/fetchreach-episode-3.mp4)
-- [Episode 4](https://github.com/aipi590-ggn/aipi590-challenge-3/blob/main/results/videos/fetchreach-episode-4.mp4)
+<table>
+  <tr>
+    <td><strong>Episode 0</strong><br><a href="results/fetchpickandplace/videos/fetchpickandplace-episode-0.mp4">mp4</a></td>
+    <td><strong>Episode 1</strong><br><a href="results/fetchpickandplace/videos/fetchpickandplace-episode-1.mp4">mp4</a></td>
+    <td><strong>Episode 2</strong><br><a href="results/fetchpickandplace/videos/fetchpickandplace-episode-2.mp4">mp4</a></td>
+    <td><strong>Episode 3</strong><br><a href="results/fetchpickandplace/videos/fetchpickandplace-episode-3.mp4">mp4</a></td>
+    <td><strong>Episode 4</strong><br><a href="results/fetchpickandplace/videos/fetchpickandplace-episode-4.mp4">mp4</a></td>
+  </tr>
+</table>
+
+### FetchReach-v4 (200k steps)
+
+<table>
+  <tr>
+    <td><img src="results/fetchreach/videos/fetchreach-episode-0.gif" width="100%"></td>
+    <td><img src="results/fetchreach/videos/fetchreach-episode-1.gif" width="100%"></td>
+    <td><img src="results/fetchreach/videos/fetchreach-episode-2.gif" width="100%"></td>
+    <td><img src="results/fetchreach/videos/fetchreach-episode-3.gif" width="100%"></td>
+    <td><img src="results/fetchreach/videos/fetchreach-episode-4.gif" width="100%"></td>
+  </tr>
+</table>
 
 ## Key Decisions
 
@@ -78,9 +94,12 @@ aipi590-challenge-3/
 │   ├── data/                                  # Trajectory JSON (per-task versioned files)
 │   └── meshes/fetch/                          # Fetch robot STL collision meshes
 ├── results/
-│   ├── models/                                # Trained policy checkpoints
-│   ├── videos/                                # Rollout episodes (mp4 + gif)
-│   └── plots/                                 # Training curves
+│   ├── fetchreach/                            # FetchReach-v4 (200k steps)
+│   └── fetchpickandplace/                     # FetchPickAndPlace-v4 (1M steps)
+│       ├── models/                            # Trained policy checkpoints
+│       ├── videos/                            # Rollout episodes (mp4 + gif)
+│       ├── plots/                             # Training curves
+│       └── eval_logs/                         # SB3 evaluation logs
 ├── requirements.txt
 └── README.md
 ```
@@ -109,25 +128,6 @@ When you run a notebook, trajectories are automatically extracted and saved with
 ---
 
 
-
-## Rollout Videos (GIF)
-
-<table>
-  <tr>
-    <td><strong>fetchreach-episode-0</strong><br><img src="results/videos/fetchreach-episode-0.gif" width="100%"></td>
-    <td><strong>fetchreach-episode-1</strong><br><img src="results/videos/fetchreach-episode-1.gif" width="100%"></td>
-  </tr>
-  <tr>
-    <td><strong>fetchreach-episode-2</strong><br><img src="results/videos/fetchreach-episode-2.gif" width="100%"></td>
-    <td><strong>fetchreach-episode-3</strong><br><img src="results/videos/fetchreach-episode-3.gif" width="100%"></td>
-  </tr>
-  <tr>
-    <td><strong>fetchreach-episode-4</strong><br><img src="results/videos/fetchreach-episode-4.gif" width="100%"></td>
-    <td></td>
-  </tr>
-</table>
-
----
 
 ## Team
 
