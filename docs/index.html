@@ -113,6 +113,17 @@
 
         const FINGER_GEOMS = ['robot0:r_gripper_finger_link', 'robot0:l_gripper_finger_link'];
 
+        const ARM_CHAIN = [
+            ['robot0:torso_lift_link', 'robot0:shoulder_pan_link'],
+            ['robot0:shoulder_pan_link', 'robot0:shoulder_lift_link'],
+            ['robot0:shoulder_lift_link', 'robot0:upperarm_roll_link'],
+            ['robot0:upperarm_roll_link', 'robot0:elbow_flex_link'],
+            ['robot0:elbow_flex_link', 'robot0:forearm_roll_link'],
+            ['robot0:forearm_roll_link', 'robot0:wrist_flex_link'],
+            ['robot0:wrist_flex_link', 'robot0:wrist_roll_link'],
+            ['robot0:wrist_roll_link', 'robot0:gripper_link'],
+        ];
+
         const TRAIL_COLOR_SUCCESS = 0x4caf50;
         const TRAIL_COLOR_FAILURE = 0xf44336;
         const MAX_TRAIL_POINTS = 1000;
@@ -121,18 +132,32 @@
         let scene, camera, renderer, controls;
         let trajectories = [], currentEpisode = null, currentStep = 0;
         let isPlaying = false, playSpeed = 1, lastTime = 0;
-        let geomMeshes = {};
+        let geomMeshes = {}, armStruts = [];
         let goalMesh, trailLine, trailCount = 0;
         let trailBuffer;
         const canvas = document.getElementById('canvas');
 
         const _quat = new THREE.Quaternion();
+        const _start = new THREE.Vector3();
+        const _end = new THREE.Vector3();
+        const _mid = new THREE.Vector3();
+        const _dir = new THREE.Vector3();
+        const _up = new THREE.Vector3(0, 1, 0);
 
         function mjQuat(q) {
             _quat.set(q[1], q[2], q[3], q[0]);
             return _quat;
         }
 
+        function centerAtCentroid(geometry) {
+            const pos = geometry.attributes.position;
+            let cx = 0, cy = 0, cz = 0;
+            for (let i = 0; i < pos.count; i++) {
+                cx += pos.getX(i); cy += pos.getY(i); cz += pos.getZ(i);
+            }
+            const n = pos.count;
+            geometry.translate(-cx / n, -cy / n, -cz / n);
+        }
 
         function initTrailBuffer() {
             trailBuffer = new Float32Array(MAX_TRAIL_POINTS * 3);
@@ -272,6 +297,7 @@
             for (const [geomName, file] of Object.entries(MESH_FILES)) {
                 promises.push(new Promise((resolve) => {
                     loader.load('meshes/fetch/' + file, (geometry) => {
+                        centerAtCentroid(geometry);
                         geometry.computeVertexNormals();
                         const mat = matMap[LINK_MATERIALS[geomName]] || whiteMat;
                         const mesh = new THREE.Mesh(geometry, mat);
@@ -290,6 +316,15 @@
                 geomMeshes[name] = mesh;
             }
 
+            // Struts bridge gaps between collision meshes
+            const strutMat = new THREE.MeshStandardMaterial({ color: 0xd0d0d0, roughness: 0.5, metalness: 0.2 });
+            for (const [from, to] of ARM_CHAIN) {
+                const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1, 10), strutMat);
+                strut.castShadow = true;
+                scene.add(strut);
+                armStruts.push(strut);
+            }
+
             await Promise.all(promises);
             document.getElementById('loading').style.display = 'none';
         }
@@ -306,6 +341,21 @@
                 mesh.quaternion.copy(mjQuat(g.quat));
             }
 
+            for (let i = 0; i < ARM_CHAIN.length; i++) {
+                const a = geoms[ARM_CHAIN[i][0]], b = geoms[ARM_CHAIN[i][1]];
+                const strut = armStruts[i];
+                if (!a || !b || !strut) continue;
+                _start.set(...a.pos);
+                _end.set(...b.pos);
+                _dir.subVectors(_end, _start);
+                const len = _dir.length();
+                _mid.addVectors(_start, _end).multiplyScalar(0.5);
+                strut.position.copy(_mid);
+                strut.scale.set(1, len, 1);
+                strut.quaternion.setFromUnitVectors(_up, _dir.normalize());
+                strut.visible = true;
+            }
+
             goalMesh.position.set(...ts.goal_position);
             const ring = goalMesh.getObjectByName('goal-ring');
             if (ring) ring.lookAt(camera.position);
@@ -316,6 +366,7 @@
 
         function updateLegacy(ts) {
             for (const m of Object.values(geomMeshes)) m.visible = false;
+            for (const s of armStruts) s.visible = false;
             goalMesh.position.set(...ts.goal_position);
         }
 
