@@ -11,26 +11,26 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-            background: #191A1A; color: #E5E5E5;
+            background: #262626; color: #E5E5E5;
             display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
         header {
             padding: 16px 24px;
-            border-bottom: 1px solid #3B3B3B;
-            background: #212121;
+            border-bottom: 1px solid #444;
+            background: #2D2D2D;
             display: flex; align-items: baseline; gap: 12px;
         }
         h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
-        .subtitle { font-size: 13px; color: #949494; font-weight: 400; }
+        .subtitle { font-size: 13px; color: #B5B5B5; font-weight: 400; }
         main { flex: 1; display: flex; gap: 0; overflow: hidden; }
         #viewport {
-            flex: 1; background: #212121;
+            flex: 1; background: #2D2D2D;
             position: relative; overflow: hidden;
-            border-right: 1px solid #3B3B3B;
+            border-right: 1px solid #444;
         }
         canvas { width: 100%; height: 100%; display: block; }
         .controls {
-            width: 280px; background: #191A1A;
+            width: 280px; background: #262626;
             padding: 20px; overflow-y: auto;
             display: flex; flex-direction: column; gap: 20px;
         }
@@ -38,67 +38,67 @@
         .control-group label {
             font-size: 11px; font-weight: 500;
             text-transform: uppercase; letter-spacing: 0.06em;
-            color: #676767;
+            color: #666666;
         }
         select {
             padding: 8px 12px;
-            background: #2D2D2D; border: 1px solid #3B3B3B;
+            background: #333; border: 1px solid #444;
             border-radius: 8px; color: #E5E5E5;
             font-family: inherit; font-size: 13px; cursor: pointer;
             transition: border-color 0.2s;
         }
-        select:focus { outline: none; border-color: #00A6FF; }
+        select:focus { outline: none; border-color: #0577B1; }
         input[type="range"] {
             width: 100%; cursor: pointer;
-            accent-color: #00A6FF;
+            accent-color: #0577B1;
         }
         button {
             padding: 8px 16px;
-            background: #2D2D2D; border: 1px solid #3B3B3B;
+            background: #333; border: 1px solid #444;
             border-radius: 8px; color: #E5E5E5;
             font-family: inherit; font-size: 13px; font-weight: 500;
             cursor: pointer; transition: all 0.15s ease-out;
         }
-        button:hover { background: #3B3B3B; border-color: #5A5A5A; }
+        button:hover { background: #444; border-color: #666666; }
         button.active {
-            background: transparent; color: #00A6FF;
-            border-color: #00A6FF;
+            background: transparent; color: #0577B1;
+            border-color: #0577B1;
         }
         .playback-controls { display: flex; gap: 8px; }
         .playback-controls button { flex: 1; }
         .stats {
-            background: #212121; border: 1px solid #3B3B3B;
+            background: #2D2D2D; border: 1px solid #444;
             border-radius: 8px; padding: 12px; font-size: 12px;
         }
         .stat-row { display: flex; justify-content: space-between; padding: 5px 0; }
-        .stat-row + .stat-row { border-top: 1px solid #2D2D2D; }
-        .stat-label { color: #676767; }
+        .stat-row + .stat-row { border-top: 1px solid #333; }
+        .stat-label { color: #666666; }
         .stat-value { color: #E5E5E5; font-weight: 500; }
-        .success { color: #34D399; } .failure { color: #F87171; }
-        .range-labels { display: flex; justify-content: space-between; font-size: 10px; color: #676767; margin-top: -4px; }
+        .success { color: #339898; } .failure { color: #C84E00; }
+        .range-labels { display: flex; justify-content: space-between; font-size: 10px; color: #666666; margin-top: -4px; }
         .range-labels .range-current { color: #E5E5E5; font-weight: 500; }
-        .progress-readout { font-size: 11px; color: #949494; text-align: center; font-variant-numeric: tabular-nums; }
+        .progress-readout { font-size: 11px; color: #B5B5B5; text-align: center; font-variant-numeric: tabular-nums; }
         .sidebar-spacer { flex: 1; }
-        .sidebar-links { font-size: 11px; color: #676767; }
+        .sidebar-links { font-size: 11px; color: #666666; }
         footer {
             padding: 12px 24px;
-            border-top: 1px solid #3B3B3B;
-            font-size: 12px; color: #676767;
-            background: #191A1A;
+            border-top: 1px solid #444;
+            font-size: 12px; color: #666666;
+            background: #262626;
         }
-        a { color: #00A6FF; text-decoration: none; }
+        a { color: #0577B1; text-decoration: none; }
         a:hover { text-decoration: underline; }
         #loading {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            color: #949494; font-size: 13px;
+            color: #B5B5B5; font-size: 13px;
         }
         .part-label {
             position: fixed;
-            background: rgba(25, 26, 26, 0.9);
+            background: rgba(38, 38, 38, 0.9);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid #3B3B3B;
+            border: 1px solid #444;
             border-radius: 6px;
             color: #E5E5E5;
             font-size: 12px;
@@ -184,12 +184,11 @@
             'robot0:gripper_link': 'gripper_link.stl',
         };
 
-        // Bodies not in trajectory data but kinematically fixed to a tracked parent.
-        // Offsets from MuJoCo robot.xml. Head joints are unactuated → stay at default.
-        // head_pan_link: child of torso_lift_link, offset (0.0531, 0, 0.603)
-        // head_tilt_link: child of head_pan_link, offset (0.1425, 0, 0.058)
-        const HEAD_PAN_OFFSET = new THREE.Vector3(0.0531, 0, 0.603);
-        const HEAD_TILT_OFFSET = new THREE.Vector3(0.1425, 0, 0.058);
+        // Head links aren't in trajectory data (joints unactuated by policy).
+        // Offsets are centroid-to-centroid, computed from MuJoCo body offsets
+        // (robot.xml) corrected by each STL mesh's centroid position.
+        const HEAD_PAN_OFFSET = new THREE.Vector3(0.098, 0.003, 0.289);
+        const HEAD_TILT_OFFSET = new THREE.Vector3(0.134, 0.0003, 0.006);
 
         const FINGER_GEOMS = ['robot0:r_gripper_finger_link', 'robot0:l_gripper_finger_link'];
 
@@ -204,8 +203,8 @@
             ['robot0:wrist_roll_link', 'robot0:gripper_link'],
         ];
 
-        const TRAIL_COLOR_SUCCESS = 0x4caf50;
-        const TRAIL_COLOR_FAILURE = 0xf44336;
+        const TRAIL_COLOR_SUCCESS = 0x339898;
+        const TRAIL_COLOR_FAILURE = 0xC84E00;
         const MAX_TRAIL_POINTS = 1000;
 
         // --- State ---
@@ -277,7 +276,7 @@
 
         function initScene() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x212121);
+            scene.background = new THREE.Color(0x2D2D2D);
             scene.up.set(0, 0, 1);
 
             camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.01, 100);
@@ -316,12 +315,12 @@
 
             const ground = new THREE.Mesh(
                 new THREE.PlaneGeometry(6, 6),
-                new THREE.MeshStandardMaterial({ color: 0x191A1A, roughness: 1 })
+                new THREE.MeshStandardMaterial({ color: 0x262626, roughness: 1 })
             );
             ground.receiveShadow = true;
             scene.add(ground);
 
-            const grid = new THREE.GridHelper(4, 20, 0x2D2D2D, 0x232323);
+            const grid = new THREE.GridHelper(4, 20, 0x333333, 0x2A2A2A);
             grid.rotation.x = Math.PI / 2;
             scene.add(grid);
 
@@ -493,8 +492,8 @@
         // --- Data: load and merge all available trajectory files ---
         async function loadTrajectories() {
             const files = [
-                'data/trajectories-fetchreach-5ep.json',
                 'data/trajectories-fetchpickandplace-5ep.json',
+                'data/trajectories-fetchreach-5ep.json',
                 'data/trajectories.json',
             ];
             for (const f of files) {
@@ -531,6 +530,7 @@
         function loadEpisode(idx) {
             currentEpisode = trajectories[idx];
             currentStep = 0;
+            atEnd = false;
             setPlaying(false);
             initTrailBuffer();
 
@@ -548,11 +548,17 @@
         }
 
         // --- Playback state ---
+        let atEnd = false;
+
         function setPlaying(playing) {
             isPlaying = playing;
             if (playing) lastTime = Date.now();
             const btn = document.getElementById('playPauseBtn');
-            btn.textContent = playing ? 'Pause' : 'Play';
+            if (atEnd && !playing) {
+                btn.textContent = 'Replay';
+            } else {
+                btn.textContent = playing ? 'Pause' : 'Play';
+            }
             btn.classList.toggle('active', playing);
         }
 
@@ -564,6 +570,7 @@
                 lastTime = now;
                 if (currentStep >= currentEpisode.timesteps.length - 1) {
                     currentStep = currentEpisode.timesteps.length - 1;
+                    atEnd = true;
                     setPlaying(false);
                 }
                 updateDisplay();
@@ -664,14 +671,25 @@
 
         // --- Events ---
         document.getElementById('episodeSelect').addEventListener('change', e => loadEpisode(+e.target.value));
-        document.getElementById('playPauseBtn').addEventListener('click', () => setPlaying(!isPlaying));
+        document.getElementById('playPauseBtn').addEventListener('click', () => {
+            if (atEnd) {
+                currentStep = 0;
+                atEnd = false;
+                initTrailBuffer();
+                updateDisplay();
+                setPlaying(true);
+            } else {
+                setPlaying(!isPlaying);
+            }
+        });
         document.getElementById('resetBtn').addEventListener('click', () => {
-            currentStep = 0; setPlaying(false);
+            currentStep = 0; atEnd = false;
+            setPlaying(false);
             initTrailBuffer();
             updateDisplay();
         });
         document.getElementById('scrubber').addEventListener('input', e => {
-            currentStep = +e.target.value; setPlaying(false);
+            currentStep = +e.target.value; atEnd = false; setPlaying(false);
             const positions = [];
             for (let i = 0; i <= currentStep; i++) {
                 const g = currentEpisode.timesteps[i]?.geoms?.['robot0:gripper_link'] || currentEpisode.timesteps[i]?.bodies?.['robot0:gripper_link'];
