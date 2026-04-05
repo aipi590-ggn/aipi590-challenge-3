@@ -32,6 +32,10 @@
         .stat-label { color: #555; } .stat-value { color: #e0e0e0; font-weight: 600; }
         .success { color: #4caf50; } .failure { color: #f44336; }
         .range-labels { display: flex; justify-content: space-between; font-size: 10px; color: #444; margin-top: -4px; }
+        .range-labels .range-current { color: #e0e0e0; font-weight: 600; }
+        .progress-readout { font-size: 11px; color: #666; text-align: center; }
+        .sidebar-spacer { flex: 1; }
+        .sidebar-links { font-size: 11px; color: #666; }
         footer { padding: 12px 24px; border-top: 1px solid #1e2749; font-size: 12px; color: #666; }
         a { color: #6ba3ff; text-decoration: none; }
         #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #666; font-size: 14px; }
@@ -55,28 +59,27 @@
             <div class="control-group">
                 <label>Playback</label>
                 <div class="playback-controls">
-                    <button id="playBtn">Play</button>
-                    <button id="pauseBtn">Pause</button>
+                    <button id="playPauseBtn">Play</button>
                     <button id="resetBtn">Reset</button>
                 </div>
             </div>
             <div class="control-group">
                 <label>Progress</label>
                 <input type="range" id="scrubber" min="0" max="100" value="0">
-                <div style="font-size:11px;color:#666;text-align:center"><span id="currentStep">0</span> / <span id="totalSteps">-</span></div>
+                <div class="progress-readout"><span id="currentStep">0</span> / <span id="totalSteps">-</span></div>
             </div>
             <div class="control-group">
                 <label>Speed</label>
                 <input type="range" id="speedControl" min="0.1" max="3" step="0.1" value="1">
-                <div class="range-labels"><span>0.1x</span><span id="speedValue">1.0</span>x<span>3x</span></div>
+                <div class="range-labels"><span>0.1x</span><span class="range-current" id="speedValue">1.0x</span><span>3x</span></div>
             </div>
             <div class="stats">
                 <div class="stat-row"><span class="stat-label">Task</span><span class="stat-value" id="taskLabel">-</span></div>
                 <div class="stat-row"><span class="stat-label">Status</span><span class="stat-value" id="statusLabel">-</span></div>
                 <div class="stat-row"><span class="stat-label">Duration</span><span class="stat-value" id="durationLabel">-</span></div>
             </div>
-            <div style="flex:1"></div>
-            <div style="font-size:11px;color:#666">
+            <div class="sidebar-spacer"></div>
+            <div class="sidebar-links">
                 <p><a href="https://github.com/aipi590-ggn/aipi590-challenge-3">GitHub</a> &middot; <a href="https://github.com/aipi590-ggn/aipi590-challenge-3/blob/main/notebooks/challenge3-pickandplace.ipynb">Notebook</a></p>
             </div>
         </div>
@@ -141,22 +144,31 @@
             'robot0:gripper_link': 0.022,
         };
 
+        const TRAIL_COLOR_SUCCESS = 0x4caf50;
+        const TRAIL_COLOR_FAILURE = 0xf44336;
+        const MAX_TRAIL_POINTS = 1000;
+
         // --- State ---
         let scene, camera, renderer, controls;
         let trajectories = [], currentEpisode = null, currentStep = 0;
         let isPlaying = false, playSpeed = 1, lastTime = 0;
         let geomMeshes = {}, jointSpheres = {}, armStruts = [];
-        let goalMesh, trailLine, trailPositions = [];
+        let goalMesh, trailLine, trailCount = 0;
+        let trailBuffer;
         const canvas = document.getElementById('canvas');
 
-        // Pre-allocated reusable vectors (render loop discipline)
+        // Pre-allocated reusable objects (render loop discipline)
         const _start = new THREE.Vector3();
         const _end = new THREE.Vector3();
         const _mid = new THREE.Vector3();
         const _dir = new THREE.Vector3();
         const _up = new THREE.Vector3(0, 1, 0);
+        const _quat = new THREE.Quaternion();
 
-        function mjQuat(q) { return new THREE.Quaternion(q[1], q[2], q[3], q[0]); }
+        function mjQuat(q) {
+            _quat.set(q[1], q[2], q[3], q[0]);
+            return _quat;
+        }
 
         function centerAtCentroid(geometry) {
             const pos = geometry.attributes.position;
@@ -166,6 +178,39 @@
             }
             const n = pos.count;
             geometry.translate(-cx / n, -cy / n, -cz / n);
+        }
+
+        function initTrailBuffer() {
+            trailBuffer = new Float32Array(MAX_TRAIL_POINTS * 3);
+            const geom = new THREE.BufferGeometry();
+            geom.setAttribute('position', new THREE.BufferAttribute(trailBuffer, 3));
+            geom.setDrawRange(0, 0);
+            trailLine.geometry.dispose();
+            trailLine.geometry = geom;
+            trailCount = 0;
+        }
+
+        function appendTrailPoint(x, y, z) {
+            if (trailCount >= MAX_TRAIL_POINTS) return;
+            const i = trailCount * 3;
+            trailBuffer[i] = x;
+            trailBuffer[i + 1] = y;
+            trailBuffer[i + 2] = z;
+            trailCount++;
+            trailLine.geometry.setDrawRange(0, trailCount);
+            trailLine.geometry.attributes.position.needsUpdate = true;
+        }
+
+        function rebuildTrailFromPositions(positions) {
+            trailCount = Math.min(positions.length, MAX_TRAIL_POINTS);
+            for (let i = 0; i < trailCount; i++) {
+                const j = i * 3;
+                trailBuffer[j] = positions[i][0];
+                trailBuffer[j + 1] = positions[i][1];
+                trailBuffer[j + 2] = positions[i][2];
+            }
+            trailLine.geometry.setDrawRange(0, trailCount);
+            trailLine.geometry.attributes.position.needsUpdate = true;
         }
 
         // --- Scene ---
@@ -196,10 +241,17 @@
             const key = new THREE.DirectionalLight(0xffffff, 1.2);
             key.position.set(2, -1, 4);
             key.castShadow = true;
-            key.shadow.mapSize.set(1024, 1024);
+            key.shadow.mapSize.set(2048, 2048);
+            key.shadow.normalBias = 0.02;
+            key.shadow.camera.left = -2;
+            key.shadow.camera.right = 2;
+            key.shadow.camera.top = 2;
+            key.shadow.camera.bottom = -2;
+            key.shadow.camera.near = 0.5;
+            key.shadow.camera.far = 8;
             scene.add(key);
             scene.add(new THREE.DirectionalLight(0xb0c4de, 0.4).translateX(-2).translateZ(2));
-            scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+            scene.add(new THREE.HemisphereLight(0xc8d8f0, 0x1a1a2e, 0.4));
 
             const ground = new THREE.Mesh(
                 new THREE.PlaneGeometry(6, 6),
@@ -240,7 +292,7 @@
             ring.name = 'goal-ring';
             goalMesh.add(ring);
 
-            trailLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x6ba3ff, transparent: true, opacity: 0.4 }));
+            trailLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: TRAIL_COLOR_SUCCESS, transparent: true, opacity: 0.4 }));
             scene.add(trailLine);
 
             window.addEventListener('resize', onResize);
@@ -332,13 +384,7 @@
             if (ring) ring.lookAt(camera.position);
 
             const grip = geoms['robot0:gripper_link'];
-            if (grip) {
-                trailPositions.push(new THREE.Vector3(...grip.pos));
-                if (trailPositions.length > 1) {
-                    trailLine.geometry.dispose();
-                    trailLine.geometry = new THREE.BufferGeometry().setFromPoints(trailPositions);
-                }
-            }
+            if (grip) appendTrailPoint(...grip.pos);
         }
 
         function updateLegacy(ts) {
@@ -371,7 +417,6 @@
                     if (!r.ok) continue;
                     const data = await r.json();
                     if (Array.isArray(data) && data.length > 0) {
-                        // Merge episodes from all files, tag with source
                         for (const ep of data) {
                             if (!trajectories.some(t => t.task === ep.task && t.episode === ep.episode)) {
                                 trajectories.push(ep);
@@ -401,9 +446,11 @@
             currentEpisode = trajectories[idx];
             currentStep = 0;
             setPlaying(false);
-            trailPositions = [];
-            trailLine.geometry.dispose();
-            trailLine.geometry = new THREE.BufferGeometry();
+            initTrailBuffer();
+
+            // Encode success/failure in the trail color
+            const trailColor = currentEpisode.success ? TRAIL_COLOR_SUCCESS : TRAIL_COLOR_FAILURE;
+            trailLine.material.color.setHex(trailColor);
 
             document.getElementById('scrubber').max = currentEpisode.timesteps.length - 1;
             document.getElementById('totalSteps').textContent = currentEpisode.timesteps.length - 1;
@@ -414,12 +461,13 @@
             updateDisplay();
         }
 
-        // --- Playback state with visual feedback ---
+        // --- Playback state ---
         function setPlaying(playing) {
             isPlaying = playing;
             if (playing) lastTime = Date.now();
-            document.getElementById('playBtn').classList.toggle('active', playing);
-            document.getElementById('pauseBtn').classList.toggle('active', !playing);
+            const btn = document.getElementById('playPauseBtn');
+            btn.textContent = playing ? 'Pause' : 'Play';
+            btn.classList.toggle('active', playing);
         }
 
         function animate() {
@@ -446,29 +494,25 @@
 
         // --- Events ---
         document.getElementById('episodeSelect').addEventListener('change', e => loadEpisode(+e.target.value));
-        document.getElementById('playBtn').addEventListener('click', () => setPlaying(true));
-        document.getElementById('pauseBtn').addEventListener('click', () => setPlaying(false));
+        document.getElementById('playPauseBtn').addEventListener('click', () => setPlaying(!isPlaying));
         document.getElementById('resetBtn').addEventListener('click', () => {
             currentStep = 0; setPlaying(false);
-            trailPositions = []; trailLine.geometry.dispose(); trailLine.geometry = new THREE.BufferGeometry();
+            initTrailBuffer();
             updateDisplay();
         });
         document.getElementById('scrubber').addEventListener('input', e => {
             currentStep = +e.target.value; setPlaying(false);
-            trailPositions = [];
+            const positions = [];
             for (let i = 0; i <= currentStep; i++) {
                 const g = currentEpisode.timesteps[i]?.geoms?.['robot0:gripper_link'] || currentEpisode.timesteps[i]?.bodies?.['robot0:gripper_link'];
-                if (g) trailPositions.push(new THREE.Vector3(...g.pos));
+                if (g) positions.push(g.pos);
             }
-            if (trailPositions.length > 1) {
-                trailLine.geometry.dispose();
-                trailLine.geometry = new THREE.BufferGeometry().setFromPoints(trailPositions);
-            }
+            rebuildTrailFromPositions(positions);
             updateDisplay();
         });
         document.getElementById('speedControl').addEventListener('input', e => {
             playSpeed = +e.target.value;
-            document.getElementById('speedValue').textContent = playSpeed.toFixed(1);
+            document.getElementById('speedValue').textContent = playSpeed.toFixed(1) + 'x';
         });
 
         // --- Init ---
