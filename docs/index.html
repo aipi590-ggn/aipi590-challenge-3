@@ -167,22 +167,21 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
-        import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
         const MESH_FILES = {
-            'robot0:base_link': 'base_link_collision.stl',
-            'robot0:torso_lift_link': 'torso_lift_link_collision.stl',
-            'robot0:head_pan_link': 'head_pan_link_collision.stl',
-            'robot0:head_tilt_link': 'head_tilt_link_collision.stl',
-            'robot0:shoulder_pan_link': 'shoulder_pan_link_collision.stl',
-            'robot0:shoulder_lift_link': 'shoulder_lift_link_collision.stl',
-            'robot0:upperarm_roll_link': 'upperarm_roll_link_collision.stl',
-            'robot0:elbow_flex_link': 'elbow_flex_link_collision.stl',
-            'robot0:forearm_roll_link': 'forearm_roll_link_collision.stl',
-            'robot0:wrist_flex_link': 'wrist_flex_link_collision.stl',
-            'robot0:wrist_roll_link': 'wrist_roll_link_collision.stl',
-            'robot0:gripper_link': 'gripper_link.stl',
+            'robot0:base_link': 'visual/base_link.glb',
+            'robot0:torso_lift_link': 'visual/torso_lift_link.glb',
+            'robot0:head_pan_link': 'visual/head_pan_link.glb',
+            'robot0:head_tilt_link': 'visual/head_tilt_link.glb',
+            'robot0:shoulder_pan_link': 'visual/shoulder_pan_link.glb',
+            'robot0:shoulder_lift_link': 'visual/shoulder_lift_link.glb',
+            'robot0:upperarm_roll_link': 'visual/upperarm_roll_link.glb',
+            'robot0:elbow_flex_link': 'visual/elbow_flex_link.glb',
+            'robot0:forearm_roll_link': 'visual/forearm_roll_link.glb',
+            'robot0:wrist_flex_link': 'visual/wrist_flex_link.glb',
+            'robot0:wrist_roll_link': 'visual/wrist_roll_link.glb',
+            'robot0:gripper_link': 'visual/gripper_link.glb',
         };
 
         // Head links aren't in trajectory data (joints unactuated by policy).
@@ -368,7 +367,7 @@
         };
 
         async function loadMeshes() {
-            const loader = new STLLoader();
+            const loader = new GLTFLoader();
             // MuJoCo material colors from shared.xml
             const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.05 });
             const greyMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.356, 0.361, 0.376), roughness: 0.5, metalness: 0.05 });
@@ -379,16 +378,23 @@
             const promises = [];
             for (const [geomName, file] of Object.entries(MESH_FILES)) {
                 promises.push(new Promise((resolve) => {
-                    loader.load('meshes/fetch/' + file, (rawGeometry) => {
-                        centerAtBBox(rawGeometry);
-                        // Merge coincident vertices then recompute normals for smooth shading
-                        const geometry = BufferGeometryUtils.mergeVertices(rawGeometry, 0.001);
-                        geometry.computeVertexNormals();
+                    loader.load('meshes/fetch/' + file, (gltf) => {
+                        // GLB scene may contain multiple meshes; wrap in a group
+                        const group = new THREE.Group();
                         const mat = matMap[LINK_MATERIALS[geomName]] || whiteMat;
-                        const mesh = new THREE.Mesh(geometry, mat);
-                        mesh.castShadow = true;
-                        scene.add(mesh);
-                        geomMeshes[geomName] = mesh;
+                        gltf.scene.traverse(child => {
+                            if (child.isMesh) {
+                                child.material = mat;
+                                child.castShadow = true;
+                            }
+                        });
+                        group.add(gltf.scene);
+                        // Center at bounding box center to match MuJoCo geom_xpos
+                        const box = new THREE.Box3().setFromObject(group);
+                        const center = box.getCenter(new THREE.Vector3());
+                        gltf.scene.position.sub(center);
+                        scene.add(group);
+                        geomMeshes[geomName] = group;
                         resolve();
                     }, undefined, () => { console.warn('Failed: ' + file); resolve(); });
                 }));
