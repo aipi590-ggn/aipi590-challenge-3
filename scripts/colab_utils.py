@@ -510,7 +510,8 @@ def publish_artifacts(
         try:
             from kaggle_secrets import UserSecretsClient
             token = UserSecretsClient().get_secret("GITHUB_TOKEN")
-        except Exception:
+        except Exception as e:
+            print(f"Warning: Kaggle secret lookup failed: {e}")
             token = None
 
     # Colab secrets
