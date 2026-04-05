@@ -369,10 +369,11 @@
         async function loadMeshes() {
             const loader = new GLTFLoader();
             // MuJoCo material colors from shared.xml
-            const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.05 });
-            const greyMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.356, 0.361, 0.376), roughness: 0.5, metalness: 0.05 });
-            const blueMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.086, 0.506, 0.767), roughness: 0.5, metalness: 0.05 });
-            const gripMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.356, 0.361, 0.376), roughness: 0.5, metalness: 0.05 });
+            const matOpts = { roughness: 0.5, metalness: 0.05, side: THREE.DoubleSide };
+            const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, ...matOpts });
+            const greyMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.356, 0.361, 0.376), ...matOpts });
+            const blueMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.086, 0.506, 0.767), ...matOpts });
+            const gripMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.356, 0.361, 0.376), ...matOpts });
             const matMap = { white: whiteMat, grey: greyMat, blue: blueMat, gripper: gripMat };
 
             const promises = [];
@@ -384,6 +385,7 @@
                         const mat = matMap[LINK_MATERIALS[geomName]] || whiteMat;
                         gltf.scene.traverse(child => {
                             if (child.isMesh) {
+                                child.geometry.computeVertexNormals();
                                 child.material = mat;
                                 child.castShadow = true;
                             }
