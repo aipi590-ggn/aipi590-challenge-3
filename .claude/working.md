@@ -2,244 +2,79 @@
 
 ## Current Status
 
-**Status**: Complete (training finished, videos generated, README with GIFs published)
+**Status**: Complete. Presentation prep in progress.
 
-**Project**: Trained robotic grasping/reaching policies with SAC+HER in MuJoCo (FetchPickAndPlace-v4 and FetchReach-v4), with analysis of sim2real transfer gaps against the reBot-DevArm platform.
+**Project**: SAC+HER policies for FetchPickAndPlace-v4 (1M steps) and FetchReach-v4 (200k steps) in MuJoCo, with sim-to-real transfer analysis.
 
 **Repo**: https://github.com/aipi590-ggn/aipi590-challenge-3
+**Live viewer**: https://aipi590-ggn.github.io/aipi590-challenge-3/
+**Team**: Lindsay Gross, Yifei Guo, Jonas Neves
 
-## Key Decisions Made
+## What the professor actually asked for
 
-1. **Task**: FetchPickAndPlace-v4 (not just reaching) — actual manipulation task with gripper control required. More aligned with "grasping" requirement than FetchReach-v3.
+Source: Professor Bent, Week 9 + Week 12 transcripts.
 
-2. **Algorithm**: SAC + HER (Hindsight Experience Replay)
-   - SAC: off-policy, sample-efficient, entropy regularization
-   - HER: relabels sparse-reward failures as successes toward achieved goal
-   - Needed because FetchPickAndPlace has almost-never-positive reward signal early in training
+1. Use a physical or simulated embodiment platform (PyBullet, MuJoCo, etc.)
+2. Train an RL policy on an embodied task (grasping, navigation, balance)
+3. Discuss challenges with sim-to-real transfer in your chosen domain
+4. Present to class (Week 12, March 31)
 
-3. **Simulation Budget**: 1M timesteps for main notebook (challenge3.ipynb), 200k for v1 (challenge3-v1.ipynb)
-   - Expected runtime: ~25 min on A100, ~60 min on T4
-   - Colab Pro users should select A100 runtime manually from Runtime menu
+She explicitly mentioned the four sim-to-real gaps from a 2025 paper covered in Week 9: action gap, reward gap, next-state gap, observation gap. Mitigation strategies discussed: domain randomization, exploratory policies, VLAs for task descriptions.
 
-4. **Live Visualization**: 4-panel ECharts dashboard in `colab_utils.LiveChartCallback`
-   - Top-left: Episode Reward (rolling 100-ep mean)
-   - Top-right: Success Rate (with area fill)
-   - Bottom-left: Actor Loss + Critic Loss (dual series)
-   - Bottom-right: Entropy Coefficient
-   - Stats bar above: timesteps, episodes, fps, success %, elapsed, updates
-   - Updates every 2000 steps (was 500 to reduce browser load)
-   - Downsamples to max 300 data points to prevent JS memory bloat
+Physical robot is bonus ("would be really awesome") but not required. Any technique from class is fair game.
 
-5. **Headless Rendering**: Uses Xvfb virtual display for evaluation videos
-   - Prepended to eval cells in both notebooks
-   - Fixes "X11: DISPLAY variable missing" error
+See `REQUIREMENTS_CHECKLIST.md` for tracked status against these requirements.
 
-## Architecture (Updated Session 2)
+## Key Decisions
 
-### Interactive Web Viewer (NEW)
-- `docs/index.html` — Three.js + playback controls for trajectory visualization
-- `docs/data/trajectories.json` — Trajectory data (joint angles, object positions over time)
-- Auto-deployed to GitHub Pages on every push to main
-- Live at: https://aipi590-ggn.github.io/aipi590-challenge-3/
+1. **Task**: FetchPickAndPlace-v4 (grasping with gripper control) + FetchReach-v4 (simpler reaching variant)
+2. **Algorithm**: SAC + HER. HER is essential because FetchPickAndPlace has sparse reward (almost never positive early in training). HER relabels failures as successes toward the achieved goal.
+3. **Simulation Budget**: 1M steps (main), 200k (reach). ~25 min on A100.
 
-### Trajectory Extraction
-- `scripts/trajectory_extractor.py` — Extracts joint angles + object states from policy rollouts
-- Can be run in Colab notebooks to save trajectory JSON
-- Enables interactive playback without re-running policy
+## Architecture
 
 ### Notebooks
-- `challenge3-pickandplace.ipynb` — main: 1M timesteps, FetchPickAndPlace-v4, full sim2real analysis
-- `challenge3-reach-experimentation.ipynb` — experimentation: 200k timesteps, FetchReach-v4, includes live chart
+- `notebooks/challenge3-pickandplace.ipynb` — main: 1M steps, full sim2real analysis
+- `notebooks/challenge3-reach-experimentation.ipynb` — 200k steps, rapid experimentation
 
 ### Scripts
-- `scripts/colab_utils.py` — contains:
-  - `prepare_notebook()` — clone repo, handle auth
-  - `publish_artifacts()` — OAuth button + git push (no manual secret needed)
-  - `save_notebook()` — snapshot running notebook via `_message.blocking_request("get_ipynb")`
-  - `LiveChartCallback` — SB3 callback, 4-panel ECharts, clear_output + full redraw every 2k steps
+- `scripts/colab_utils.py` — Colab automation (clone, publish, LiveChartCallback, video conversion)
+- `scripts/trajectory_extractor.py` — extract body positions from policy rollouts for web viewer
+- `scripts/auto_check.py` — CI script that auto-marks REQUIREMENTS_CHECKLIST.md items
 
-### Data Flow (Training)
-1. Install deps → clone repo → setup paths
-2. Create train/eval envs (Monitor wrapped)
-3. SAC with HerReplayBuffer (n_sampled_goal=4, strategy='future')
-4. EvalCallback runs every 20k steps, saves best_model
-5. LiveChartCallback renders dashboard every 2k steps
-6. Training metrics pulled from `model.logger.name_to_value`
+### CI
+- `.github/workflows/auto-check.yml` — on push to main + manual dispatch: runs auto_check.py, writes job summary with checklist, commits if changed
+
+### Web Viewer
+- `docs/index.html` — Three.js interactive trajectory playback
+- `docs/data/trajectories*.json` — per-task trajectory data
+- GitHub Pages deployed from branch (docs/ directory)
+
+## Sim-to-Real Analysis
+
+Five gaps documented in README:
+1. Contact & Gripper Modeling (finger compliance, micro-slip)
+2. Actuator Fidelity (backlash, ~10ms ROS 2 latency)
+3. Observation Noise (encoder resolution, camera pipeline latency)
+4. Zero Calibration Drift (22mm error at 650mm reach from 2 degrees)
+5. Domain Randomization Strategy (7 parameters proposed)
+
+Maps to the four gaps from Week 9 lecture: action (actuator fidelity), reward (implicit in task success definition), next-state (contact modeling, calibration drift), observation (noise, camera latency).
 
 ## Known Issues & Workarounds
 
-### Issue: Browser fan noise during training
-**Root cause**: Full ECharts redraw every 500 steps = ~2000 redraws over 1M steps
-**Solution**:
-- Increased `update_freq` default from 500 → 2000 (4× fewer redraws)
-- Added `max_points=300` downsampling so JS arrays stay bounded
-- Tunable: `LiveChartCallback(update_freq=5000, max_points=200)` for even lighter load
+- **Browser fan noise during training**: Reduced LiveChartCallback from 500 to 2000 step intervals, max 300 data points
+- **Colab visualization broken (eval_js)**: Switched to clear_output + display(HTML)
+- **MuJoCo headless rendering**: Xvfb virtual display prepended to eval cells
+- **3D viewer wrong joint data**: Rewrote trajectory extractor to save data.xpos for 12 Fetch bodies
 
-### Issue: Colab notebook visualization broken with eval_js
-**Root cause**: eval_js runs in main frame, ECharts div lives in output iframe — no shared window
-**Solution**:
-- Switched from eval_js to `clear_output(wait=True)` + `display(HTML(...))`
-- Data baked into HTML template at render time (no cross-frame JS calls)
-- Fully reliable, works in all Colab contexts
+## Open Items
 
-### Issue: MuJoCo rendering fails ("gladLoadGL error", "DISPLAY missing")
-**Root cause**: Colab is headless, no X11 display
-**Solution**:
-- Prepend eval cells with Xvfb virtual display:
-  ```python
-  import subprocess, os
-  subprocess.Popen(['Xvfb', ':1', '-screen', '0', '1024x768x24'])
-  os.environ['DISPLAY'] = ':1'
-  ```
-- Applied to both challenge3.ipynb and challenge3-v1.ipynb
-
-## Sim2Real Analysis Structure
-
-Five major gaps between MuJoCo training and reBot-DevArm hardware:
-
-1. **Contact & Gripper Modeling** (dominant) — finger compliance, micro-slip, asymmetry
-2. **Actuator Fidelity** — backlash, control loop latency (~10ms ROS 2), torque saturation
-3. **Observation Noise** — encoder resolution, camera uncertainty & pipeline latency
-4. **Zero Calibration Drift** — per-joint errors compound through kinematic chain (22mm error at 650mm reach from 2°)
-5. **Domain Randomization Strategy** — table with 7 parameters: action delay, observation noise, mass variance, friction range, object friction, gripper position noise, latency simulation
-
-Beyond DR: residual policy learning + real-to-sim adaptation (Isaac Sim integration planned Q2 2026)
-
-## Completion Status (2026-04-04, Session 4)
-
-✅ **Challenge 3 Requirements Met** (Course Transcript verified)
-   1. Physical/simulated embodiment environment ✅ MuJoCo
-   2. Embodied task (grasping/reaching/navigation) ✅ FetchPickAndPlace + FetchReach
-   3. RL policy training ✅ SAC+HER both tasks
-   4. Sim-to-real transfer analysis ✅ 5 documented gaps in README
-
-✅ **Training**: Both models trained successfully
-   - FetchReach-v4 (200k steps) — videos + GIFs generated + trajectory JSON extracted
-   - FetchPickAndPlace-v4 (1M steps) — started in Colab, output frames/gifs available
-
-✅ **Videos & GIFs**: Converted to GIFs for inline README playback
-   - 5 episode rollouts per model
-   - Grid layout support added (2-column default)
-   - Plays in GitHub README without external embeds
-
-✅ **Interactive Visualization**: Three.js web viewer + GitHub Pages deployment
-   - Live at: https://aipi590-ggn.github.io/aipi590-challenge-3/
-   - Trajectory extraction cells added to both notebooks
-   - Playback controls, speed adjustment, real-time stats
-
-✅ **README**: Published with rollout videos, grid layout, and visualization link
-   - Team attribution added: Lindsay Gross, Yifei Guo, Jonas Neves
-   - Links to GitHub Releases for downloadable models
-   - Interactive section at top with CTA
-
-✅ **Notebook Setup**: Refined for reliability
-   - Setup cell now clones repo first, then imports colab_utils
-   - Download colab_utils from repo (not local path)
-   - publish_artifacts moved to final cell only
-   - Trajectory extraction at end of reach notebook
-
-✅ **Publish Pipeline**: Working artifacts pipeline via `colab_utils.py`
-   - OAuth-based Git push (no manual token paste)
-   - Auto-collects results/ directory
-   - Handles notebook JSON normalization
-
-## Session 4: Robot Visualization Rewrite
-
-**Problem**: The 3D viewer rendered primitive shapes (sphere, cylinder, box) instead of the Fetch robot. Two root causes:
-1. The trajectory extractor saved wrong qpos indices as "joint_positions" (got base slides + head instead of arm joints)
-2. The viewer never loaded any robot model — it just plotted trajectory coordinates on hand-built geometry
-
-**Solution**: Body-position-based rendering
-- `trajectory_extractor.py` now saves `data.xpos` for 12 key Fetch bodies per timestep (MuJoCo computes FK)
-- `docs/index.html` rewritten to render connected capsules between body positions (arm links, joint spheres, gripper fingers)
-- Coordinate mapping: MuJoCo Z-up → Three.js Y-up via `(x, z, y)` swap
-- Graceful fallback: old data without `body_positions` shows "End Effector Only" badge
-
-**To activate full robot rendering**: Regenerate trajectories by running the extraction cell in either notebook. The extractor API is unchanged — same notebook cells, new output format.
-
-**Bodies saved**: base_link, torso_lift, shoulder_pan/lift, upperarm_roll, elbow_flex, forearm_roll, wrist_flex/roll, gripper_link, r/l_gripper_finger_link
-
-## Next Steps / Future Extensions
-
-1. **Domain Randomization**: Add actuator delay, observation noise, friction variance wrappers
-   - Would improve sim2real robustness
-   - Parameters documented in working.md (section "Sim2Real Analysis Structure")
-
-2. **Real Hardware Testing**: Deploy best_model.zip to reBot-DevArm platform
-   - Measure actual vs simulated success rates
-   - Identify dominant failure modes
-
-3. **Algorithm Comparison**: Evaluate PPO, TD3 on same tasks
-   - Cross-validate sample efficiency vs SAC+HER
-   - Generate comparative training curves
-
-4. **Residual Learning**: Train correction policy on hardware failures
-   - Leaves SAC policy frozen, adds small residual network
-   - Faster adaptation than retraining from scratch
-
-## Files to Know
-
-- `.claude/working.md` — this file
-- `notebooks/challenge3.ipynb` — main work
-- `notebooks/challenge3-v1.ipynb` — FetchReach variant
-- `scripts/colab_utils.py` — all the Colab automation & visualization
-- `results/models/best_model.zip` — trained policy (created after first eval callback)
-- `results/videos/` — recorded rollouts
-- `results/plots/` — training curves (matplotlib, saved after cell-plot)
-- `requirements.txt` — deps (mujoco, gymnasium-robotics, stable-baselines3, moviepy)
-
-## Best Practices Adopted from Challenge 2
-
-Aligned repository structure and documentation with Challenge 2 patterns:
-
-1. **README Structure**
-   - Dependency badges at top (Python, MuJoCo, SB3, License)
-   - Interactive visualization link prominently featured
-   - Notebooks table with Colab open badges
-   - Structure section showing directory layout
-   - Team section with standard format
-   - Dividing lines (---) for visual hierarchy
-
-2. **Team Attribution**
-   - Consistent format: Name · Name · Name
-   - Affiliation and term: Duke University · AIPI 590 · Spring 2026
-
-3. **Licensing**
-   - MIT LICENSE file created (matches badge reference)
+- [ ] Presentation slides (PRES1-5 in checklist)
+- [ ] PickAndPlace rollout videos/GIFs not in README (only FetchReach shown)
 
 ## Metadata
 
 - **Created**: 2026-04-04
-- **Last Updated**: 2026-04-04 (session 4)
-- **Challenge Due**: 2026-03-31 (passed deadline, core work complete)
-- **Team**: Lindsay Gross, Yifei Guo, Jonas Neves
-
-## Recent Commits (Sessions 2-4)
-
-### Session 2 Polish
-1. `3676eb9` — add grid layout support to update_readme_with_gifs (2-column default)
-2. `f55a1c6` — remove unused embed_videos_in_readme functions
-3. `521c096` — add training GIFs [skip ci]
-4. `1899dc4` — fix missing re import in update_readme_with_gifs
-
-### Session 3 Refinements
-5. `6613173` — update documentation for renamed notebooks
-6. `ebeceb9` — add interactive policy visualization with GitHub Pages deployment
-7. `1ca64c6` — remove custom pages workflow — GitHub has built-in deployment
-8. `fe56932` — fix Three.js CDN URLs (use v0.160.0)
-9. `75a385b` — add trajectory extraction cells to notebooks and fix MultiInputPolicy handling
-10. `bbaebce` — move trajectory extraction cell to end of reach notebook
-11. `f502129` — remove premature publish_artifacts from Setup cell — only publish at end
-12. `98d1955` — fix Setup cell — clone repo before importing scripts
-13. `c4c559a` — restore original Setup pattern — download colab_utils from repo
-14. `8ab48ab` — remove (test GIF cleanup)
-
-### Session 3+ (Org Migration & Visualization)
-15. Migrated repo to `aipi590-ggn` org (all links, Colab badges, colab_utils updated)
-16. `7ca7db0` — add importmap for Three.js bare imports in OrbitControls
-17. `1aecfdd` — implement versioned trajectory files to prevent overwrites between tasks
-18. `b3bf6ae` — update notebooks to save versioned trajectory files
-19. `8d99001` — document trajectory file versioning system
-20. `71658bc` — rebuild 3D visualization: table, end effector, goal marker, trajectory trail
-
-All commits post-deadline; challenge core work complete.
+- **Last Updated**: 2026-04-05 (session 5: checklist + CI workflows)
+- **Challenge Due**: 2026-03-31
