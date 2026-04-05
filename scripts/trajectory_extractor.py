@@ -169,9 +169,10 @@ def extract_trajectory(
         selected_raw_indices.add(traj['episode'])
         traj['episode'] = i
 
-    # Clean up video files: keep selected, remove the rest, renumber
+    # Clean up video files: keep selected, remove the rest, renumber, make GIFs
     if video_dir:
         _keep_videos(video_dir, video_prefix, selected_raw_indices, n_run)
+        _convert_gifs(video_dir, video_prefix)
 
     kept_success = sum(1 for t in selected if t['success'])
     print(f'Selected {n_viz}/{n_run} episodes for visualization ({kept_success} successful)')
@@ -202,6 +203,33 @@ def _keep_videos(video_dir, prefix, keep_indices, total):
             tmp = path.parent / f'_tmp_{new_idx}{ext}'
             path.rename(tmp)
             tmp.rename(new_path)
+
+
+def _convert_gifs(video_dir, prefix, scale=320, fps=5):
+    """Convert kept MP4s to GIFs and remove stale GIFs."""
+    import subprocess as sp
+
+    video_dir = Path(video_dir)
+
+    # Remove any pre-existing GIFs (may be stale from previous runs)
+    for old_gif in video_dir.glob(f'{prefix}-episode-*.gif'):
+        old_gif.unlink(missing_ok=True)
+
+    for mp4 in sorted(video_dir.glob(f'{prefix}-episode-*.mp4')):
+        gif = mp4.with_suffix('.gif')
+        try:
+            sp.run([
+                'ffmpeg', '-i', str(mp4),
+                '-vf', f'fps={fps},scale={scale}:-1:flags=lanczos',
+                '-y', str(gif),
+            ], check=True, capture_output=True)
+            size_kb = gif.stat().st_size // 1024
+            print(f'  {gif.name} ({size_kb}KB)')
+        except FileNotFoundError:
+            print('Warning: ffmpeg not found, skipping GIF conversion')
+            return
+        except sp.CalledProcessError as e:
+            print(f'Warning: failed to convert {mp4.name}: {e.stderr.decode()[:200]}')
 
 
 def save_trajectories(episodes, output_path):
