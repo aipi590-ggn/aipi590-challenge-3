@@ -629,6 +629,10 @@
             for (const [name, mesh] of Object.entries(geomMeshes)) {
                 meshToName.set(mesh, name);
             }
+            for (let i = 0; i < ARM_CHAIN.length; i++) {
+                const [from, to] = ARM_CHAIN[i];
+                meshToName.set(armStruts[i], `__strut__${LABELS[from] || from} \u2192 ${LABELS[to] || to}`);
+            }
             scene.traverse(obj => {
                 if (obj.isMesh && !meshToName.has(obj)) {
                     if (obj === goalMesh) meshToName.set(obj, '__scene__Goal');
@@ -646,17 +650,24 @@
                 _pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
                 raycaster.setFromCamera(_pointer, camera);
-                const hits = raycaster.intersectObjects(scene.children, false);
+                const hits = raycaster.intersectObjects(scene.children, true);
 
                 let name = null;
                 for (const hit of hits) {
-                    const n = meshToName.get(hit.object);
-                    if (n) { name = n; break; }
+                    // Walk up parent chain to find a mapped object
+                    let obj = hit.object;
+                    while (obj) {
+                        const n = meshToName.get(obj);
+                        if (n) { name = n; break; }
+                        obj = obj.parent;
+                    }
+                    if (name) break;
                 }
 
                 if (name) {
                     let displayName;
-                    if (name.startsWith('__scene__')) displayName = name.slice(9);
+                    if (name.startsWith('__strut__')) displayName = name.slice(8);
+                    else if (name.startsWith('__scene__')) displayName = name.slice(9);
                     else displayName = LABELS[name] || name;
 
                     partLabel.textContent = displayName;
