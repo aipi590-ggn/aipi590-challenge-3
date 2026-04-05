@@ -6,7 +6,7 @@
 
 **Project**: Trained robotic grasping/reaching policies with SAC+HER in MuJoCo (FetchPickAndPlace-v4 and FetchReach-v4), with analysis of sim2real transfer gaps against the reBot-DevArm platform.
 
-**Repo**: https://github.com/jonasneves/aipi590-challenge-3
+**Repo**: https://github.com/aipi590-ggn/aipi590-challenge-3
 
 ## Key Decisions Made
 
@@ -40,7 +40,7 @@
 - `docs/index.html` — Three.js + playback controls for trajectory visualization
 - `docs/data/trajectories.json` — Trajectory data (joint angles, object positions over time)
 - Auto-deployed to GitHub Pages on every push to main
-- Live at: https://jonasneves.github.io/aipi590-challenge-3/
+- Live at: https://aipi590-ggn.github.io/aipi590-challenge-3/
 
 ### Trajectory Extraction
 - `scripts/trajectory_extractor.py` — Extracts joint angles + object states from policy rollouts
@@ -105,7 +105,7 @@ Five major gaps between MuJoCo training and reBot-DevArm hardware:
 
 Beyond DR: residual policy learning + real-to-sim adaptation (Isaac Sim integration planned Q2 2026)
 
-## Completion Status (2026-04-04, Session 3)
+## Completion Status (2026-04-04, Session 4)
 
 ✅ **Challenge 3 Requirements Met** (Course Transcript verified)
    1. Physical/simulated embodiment environment ✅ MuJoCo
@@ -123,7 +123,7 @@ Beyond DR: residual policy learning + real-to-sim adaptation (Isaac Sim integrat
    - Plays in GitHub README without external embeds
 
 ✅ **Interactive Visualization**: Three.js web viewer + GitHub Pages deployment
-   - Live at: https://jonasneves.github.io/aipi590-challenge-3/
+   - Live at: https://aipi590-ggn.github.io/aipi590-challenge-3/
    - Trajectory extraction cells added to both notebooks
    - Playback controls, speed adjustment, real-time stats
 
@@ -142,6 +142,22 @@ Beyond DR: residual policy learning + real-to-sim adaptation (Isaac Sim integrat
    - OAuth-based Git push (no manual token paste)
    - Auto-collects results/ directory
    - Handles notebook JSON normalization
+
+## Session 4: Robot Visualization Rewrite
+
+**Problem**: The 3D viewer rendered primitive shapes (sphere, cylinder, box) instead of the Fetch robot. Two root causes:
+1. The trajectory extractor saved wrong qpos indices as "joint_positions" (got base slides + head instead of arm joints)
+2. The viewer never loaded any robot model — it just plotted trajectory coordinates on hand-built geometry
+
+**Solution**: Body-position-based rendering
+- `trajectory_extractor.py` now saves `data.xpos` for 12 key Fetch bodies per timestep (MuJoCo computes FK)
+- `docs/index.html` rewritten to render connected capsules between body positions (arm links, joint spheres, gripper fingers)
+- Coordinate mapping: MuJoCo Z-up → Three.js Y-up via `(x, z, y)` swap
+- Graceful fallback: old data without `body_positions` shows "End Effector Only" badge
+
+**To activate full robot rendering**: Regenerate trajectories by running the extraction cell in either notebook. The extractor API is unchanged — same notebook cells, new output format.
+
+**Bodies saved**: base_link, torso_lift, shoulder_pan/lift, upperarm_roll, elbow_flex, forearm_roll, wrist_flex/roll, gripper_link, r/l_gripper_finger_link
 
 ## Next Steps / Future Extensions
 
@@ -194,11 +210,11 @@ Aligned repository structure and documentation with Challenge 2 patterns:
 ## Metadata
 
 - **Created**: 2026-04-04
-- **Last Updated**: 2026-04-04 (session 3)
+- **Last Updated**: 2026-04-04 (session 4)
 - **Challenge Due**: 2026-03-31 (passed deadline, core work complete)
 - **Team**: Lindsay Gross, Yifei Guo, Jonas Neves
 
-## Recent Commits (Sessions 2-3)
+## Recent Commits (Sessions 2-4)
 
 ### Session 2 Polish
 1. `3676eb9` — add grid layout support to update_readme_with_gifs (2-column default)
@@ -218,4 +234,12 @@ Aligned repository structure and documentation with Challenge 2 patterns:
 13. `c4c559a` — restore original Setup pattern — download colab_utils from repo
 14. `8ab48ab` — remove (test GIF cleanup)
 
-All commits post-deadline; challenge core work complete. Sessions 2-3 focused on interactive visualization, notebook reliability, and documentation.
+### Session 3+ (Org Migration & Visualization)
+15. Migrated repo to `aipi590-ggn` org (all links, Colab badges, colab_utils updated)
+16. `7ca7db0` — add importmap for Three.js bare imports in OrbitControls
+17. `1aecfdd` — implement versioned trajectory files to prevent overwrites between tasks
+18. `b3bf6ae` — update notebooks to save versioned trajectory files
+19. `8d99001` — document trajectory file versioning system
+20. `71658bc` — rebuild 3D visualization: table, end effector, goal marker, trajectory trail
+
+All commits post-deadline; challenge core work complete.
